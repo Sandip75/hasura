@@ -10,6 +10,7 @@ const log = require("app/util").logger;
 
 const typeDefs = require("./graphql/typeDefs").default;
 const resolvers = require("./graphql/resolvers");
+const context = require("./graphql/context");
 //#endregion
 
 function run() {
@@ -18,11 +19,12 @@ function run() {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json({ limit: "50mb" }));
 
-  // app.use(routes);
+  app.use("/api", routes);
 
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
+    context,
   });
 
   apolloServer.applyMiddleware({
