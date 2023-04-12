@@ -1,0 +1,51 @@
+version: '3.6'
+services:
+
+  demo-postgres:
+    container_name: demo-postgres
+    image: postgres:11.7
+    restart: always
+    environment: 
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./.postgres-data:/var/lib/postgresql/data
+  
+  demo-hasura-graphql-engine:
+    image: hasura/graphql-engine:v2.22.1.cli-migrations-v2
+    container_name: demo-hasura
+    ports:
+      - 8080:8080
+    depends_on:
+      - demo-postgres
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:@demo-postgres:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+      HASURA_GRAPHQL_MIGRATIONS_DIR: /hasura/migrations
+    volumes:
+      - ./hasura:/hasura
+
+  demo-node-api:
+    image: keymetrics/pm2:10-slim
+    container_name: demo-api
+    volumes:
+      - ./api:/usr/src/api
+    working_dir: /usr/src/api
+    command: yarn run:${NODE_ENV}
+    ports:
+      - 3000:3000
+    depends_on:
+      - demo-postgres
+      - demo-hasura-graphql-engine
+    environment:
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+      NODE_ENV: ${NODE_ENV}
+
+
+volumes:
+  .postgres-data:
+  hasura:
