@@ -21,7 +21,7 @@ export default gql`
     first_name: String
     last_name: String
     gender: String
-    location: [Location]
+    location: Location
   }
 
   type Query {
